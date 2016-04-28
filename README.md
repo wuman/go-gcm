@@ -66,9 +66,6 @@ LICENSE
     See the License for the specific language governing permissions and
     limitations under the License.
 
-References
-----------
-
 [1]: https://developers.google.com/cloud-messaging/downstream#http_post_request
 [2]: https://developers.google.com/cloud-messaging/http#send-to-sync
 [3]: https://developers.google.com/cloud-messaging/http#message-with-payload--notification-message
