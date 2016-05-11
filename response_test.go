@@ -14,13 +14,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		resp *response
 	}
 	params := []param{
-		{`{"success":1,"results":[{"message_id":"id"}]}`, &response{Success: 1, Results: []result{{MessageId: "id"}}}},
+		{`{"success":1,"results":[{"message_id":"id"}]}`, &response{Success: 1, Results: []result{{MessageID: "id"}}}},
 		// topic message responses
-		{`{"message_id":10}`, &response{MessageId: 10}},
+		{`{"message_id":10}`, &response{MessageID: 10}},
 		{`{"error":"TopicsMessageRateExceeded"}`, &response{Err: ErrorTopicsMessageRateExceeded}},
 		// device group message responses
 		{`{"success":2}`, &response{Success: 2, Failure: 0}},
-		{`{"success":1,"failure":2,"failed_registration_ids":["id1","id2"]}`, &response{Success: 1, Failure: 2, FailedRegistrationIds: []string{"id1", "id2"}}},
+		{`{"success":1,"failure":2,"failed_registration_ids":["id1","id2"]}`, &response{Success: 1, Failure: 2, FailedRegistrationIDs: []string{"id1", "id2"}}},
 	}
 	for _, param := range params {
 		if param.json != "" {

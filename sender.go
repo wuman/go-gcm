@@ -28,25 +28,25 @@ var gcmEndpoint = ConnectionServerEndpoint
 
 // Sender sends GCM messages to the GCM connection server.
 type Sender struct {
-	// ApiKey specifies the API key.
-	ApiKey string
+	// APIKey specifies the API key.
+	APIKey string
 	// Client is the http client used for transport.  By default it is just http.Client.
 	Client *http.Client
 }
 
 // NewSender instantiates a Sender given the API key.
 func NewSender(apiKey string) *Sender {
-	return NewSenderWithHttpClient(apiKey, new(http.Client))
+	return NewSenderWithHTTPClient(apiKey, new(http.Client))
 }
 
-// NewSenderWithHttpClient instantiates a Sender given the API key and an http.Client.
-func NewSenderWithHttpClient(apiKey string, client *http.Client) *Sender {
+// NewSenderWithHTTPClient instantiates a Sender given the API key and an http.Client.
+func NewSenderWithHTTPClient(apiKey string, client *http.Client) *Sender {
 	return &Sender{apiKey, client}
 }
 
-func checkUnrecoverableErrors(s *Sender, to string, regIds []string, msg *Message, retries int) error {
+func checkUnrecoverableErrors(s *Sender, to string, regIDs []string, msg *Message, retries int) error {
 	// check sender
-	if s.ApiKey == "" {
+	if s.APIKey == "" {
 		return fmt.Errorf("missing API key")
 	}
 	if s.Client == nil {
@@ -60,7 +60,7 @@ func checkUnrecoverableErrors(s *Sender, to string, regIds []string, msg *Messag
 		return errors.New("TimeToLive should be non-negative and at most 4 weeks")
 	}
 	// check recipients
-	if to == "" && (regIds == nil || len(regIds) <= 0) {
+	if to == "" && (regIDs == nil || len(regIDs) <= 0) {
 		return errors.New("missing recipient(s)")
 	}
 	// check retries
@@ -84,16 +84,16 @@ func (s *Sender) sendRaw(msg *message) (*response, error) {
 		return nil, err
 	}
 
-	msgJson, err := json.Marshal(msg)
+	msgJSON, err := json.Marshal(msg)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", gcmEndpoint, bytes.NewBuffer(msgJson))
+	req, err := http.NewRequest("POST", gcmEndpoint, bytes.NewBuffer(msgJSON))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", fmt.Sprintf("key=%s", s.ApiKey))
+	req.Header.Add("Authorization", fmt.Sprintf("key=%s", s.APIKey))
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := s.Client.Do(req)
@@ -146,12 +146,12 @@ func (s *Sender) SendNoRetry(msg *Message, to string) (*Result, error) {
 			return nil, fmt.Errorf("invalid response.results: %v", resp.Results)
 		}
 		res := resp.Results[0]
-		result.MessageId = res.MessageId
-		result.CanonicalRegistrationId = res.RegistrationId
+		result.MessageID = res.MessageID
+		result.CanonicalRegistrationID = res.RegistrationID
 		result.Error = res.Err
 	} else if strings.HasPrefix(to, TopicPrefix) { // topic message
-		if resp.MessageId != 0 {
-			result.MessageId = strconv.FormatInt(resp.MessageId, 10)
+		if resp.MessageID != 0 {
+			result.MessageID = strconv.FormatInt(resp.MessageID, 10)
 		} else if resp.Err != "" {
 			result.Error = resp.Err
 		} else {
@@ -160,7 +160,7 @@ func (s *Sender) SendNoRetry(msg *Message, to string) (*Result, error) {
 	} else { // device group message
 		result.Success = resp.Success
 		result.Failure = resp.Failure
-		result.FailedRegistrationIds = resp.FailedRegistrationIds // partial success
+		result.FailedRegistrationIDs = resp.FailedRegistrationIDs // partial success
 	}
 
 	return result, nil
@@ -182,7 +182,7 @@ func (s *Sender) SendWithRetries(msg *Message, to string, retries int) (result *
 			if result != nil && (result.Error == ErrorUnavailable || result.Error == ErrorInternalServerError) {
 				tryAgain = true
 			} else if err != nil {
-				if httpErr, isHttpErr := err.(httpError); isHttpErr {
+				if httpErr, isHTTPErr := err.(httpError); isHTTPErr {
 					tryAgain = httpErr.statusCode >= http.StatusInternalServerError && httpErr.statusCode < 600
 				}
 			}
@@ -216,13 +216,13 @@ func (s *Sender) SendMulticastNoRetry(msg *Message, registrationIds []string) (*
 	result.Success = resp.Success
 	result.Failure = resp.Failure
 	result.CanonicalIds = resp.CanonicalIds
-	result.MulticastId = resp.MulticastId
+	result.MulticastID = resp.MulticastID
 	if resp.Results != nil {
 		result.Results = make([]Result, len(resp.Results))
 		for i, res := range resp.Results {
 			result.Results[i] = Result{
-				MessageId:               res.MessageId,
-				CanonicalRegistrationId: res.RegistrationId,
+				MessageID:               res.MessageID,
+				CanonicalRegistrationID: res.RegistrationID,
 				Error: res.Err,
 			}
 		}
@@ -236,19 +236,19 @@ func (s *Sender) SendMulticastNoRetry(msg *Message, registrationIds []string) (*
 //   * 200 + error:Unavailable
 //   * 200 + error:InternalServerError
 // 5xx HTTP status codes are not retried to keep the code simple.
-func (s *Sender) SendMulticastWithRetries(msg *Message, regIds []string, retries int) (*MulticastResult, error) {
-	if err := checkUnrecoverableErrors(s, "", regIds, msg, retries); err != nil {
+func (s *Sender) SendMulticastWithRetries(msg *Message, regIDs []string, retries int) (*MulticastResult, error) {
+	if err := checkUnrecoverableErrors(s, "", regIDs, msg, retries); err != nil {
 		return nil, err
 	}
-	rawMsg := &message{Message: *msg, registrationIds: regIds}
+	rawMsg := &message{Message: *msg, registrationIds: regIDs}
 
-	results := make(map[string]result, len(regIds))
+	results := make(map[string]result, len(regIDs))
 	finalResult, backoff, firstResponse := new(MulticastResult), BackoffInitialDelay, true
 
 	for {
 		resp, err := s.sendRaw(rawMsg)
 		if err != nil {
-			if httpErr, isHttpErr := err.(httpError); isHttpErr && httpErr.statusCode >= 500 && httpErr.statusCode < 600 {
+			if httpErr, isHTTPErr := err.(httpError); isHTTPErr && httpErr.statusCode >= 500 && httpErr.statusCode < 600 {
 				// recoverable error, so continue to retry
 			} else if firstResponse {
 				// unrecoverable first response
@@ -262,20 +262,20 @@ func (s *Sender) SendMulticastWithRetries(msg *Message, regIds []string, retries
 
 		var retryRegIds []string
 		if resp != nil {
-			if resp.MulticastId != 0 {
+			if resp.MulticastID != 0 {
 				if firstResponse {
-					finalResult.MulticastId = resp.MulticastId
+					finalResult.MulticastID = resp.MulticastID
 				} else {
-					finalResult.RetryMulticastIds = append(finalResult.RetryMulticastIds, resp.MulticastId)
+					finalResult.RetryMulticastIDs = append(finalResult.RetryMulticastIDs, resp.MulticastID)
 				}
 			}
 
 			retryRegIds = make([]string, 0, resp.Failure)
 			for i := range resp.Results {
-				regId, result := rawMsg.registrationIds[i], resp.Results[i]
-				results[regId] = result
+				regID, result := rawMsg.registrationIds[i], resp.Results[i]
+				results[regID] = result
 				if result.Err == ErrorUnavailable || result.Err == ErrorInternalServerError {
-					retryRegIds = append(retryRegIds, regId)
+					retryRegIds = append(retryRegIds, regID)
 				}
 			}
 		} else {
@@ -298,17 +298,17 @@ func (s *Sender) SendMulticastWithRetries(msg *Message, regIds []string, retries
 	}
 
 	// reconstruct final results
-	finalResults := make([]Result, len(regIds))
-	for i, regId := range regIds {
-		result := results[regId]
+	finalResults := make([]Result, len(regIDs))
+	for i, regID := range regIDs {
+		result := results[regID]
 		finalResults[i] = Result{
-			MessageId:               result.MessageId,
-			CanonicalRegistrationId: result.RegistrationId,
+			MessageID:               result.MessageID,
+			CanonicalRegistrationID: result.RegistrationID,
 			Error: result.Err,
 		}
-		if result.MessageId != "" {
+		if result.MessageID != "" {
 			finalResult.Success++
-			if result.RegistrationId != "" {
+			if result.RegistrationID != "" {
 				finalResult.CanonicalIds++
 			}
 		} else {

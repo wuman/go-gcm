@@ -14,12 +14,12 @@ var data = map[string]string{"k": "v"}
 var msg = &Message{Data: data}
 var twoRecipients = []string{"1", "2"}
 var topic = TopicPrefix + "global"
-var success = response{Success: 1, Results: []result{{MessageId: "id"}}}
+var success = response{Success: 1, Results: []result{{MessageID: "id"}}}
 var fail = response{Failure: 1, Results: []result{{Err: ErrorUnavailable}}}
-var partialDeviceGroup = response{Success: 1, Failure: 2, FailedRegistrationIds: []string{"id1", "id2"}}
-var partialMulticast = response{MulticastId: 1, Success: 1, Failure: 1, Results: []result{{MessageId: "id1"}, {Err: ErrorUnavailable}}}
+var partialDeviceGroup = response{Success: 1, Failure: 2, FailedRegistrationIDs: []string{"id1", "id2"}}
+var partialMulticast = response{MulticastID: 1, Success: 1, Failure: 1, Results: []result{{MessageID: "id1"}, {Err: ErrorUnavailable}}}
 
-func TestSendWithInvalidApiKey(t *testing.T) {
+func TestSendWithInvalidAPIKey(t *testing.T) {
 	server := startTestServer(t)
 	defer server.Close()
 	s := NewSender("")
@@ -94,7 +94,7 @@ func TestSendRetryOk_DueToApiError(t *testing.T) {
 	s := NewSender("test-api-key")
 	result, err := s.SendWithRetries(msg, "regId", 1)
 	assert.NoError(t, err)
-	assert.Equal(t, Result{MessageId: "id"}, *result)
+	assert.Equal(t, Result{MessageID: "id"}, *result)
 }
 
 func TestSendRetryOk_DueToHttpError(t *testing.T) {
@@ -106,7 +106,7 @@ func TestSendRetryOk_DueToHttpError(t *testing.T) {
 	s := NewSender("test-api-key")
 	result, err := s.SendWithRetries(msg, "regId", 1)
 	assert.NoError(t, err)
-	assert.Equal(t, Result{MessageId: "id"}, *result)
+	assert.Equal(t, Result{MessageID: "id"}, *result)
 }
 
 func TestSendRetryFail_DueToExceededRetries(t *testing.T) {
@@ -136,7 +136,7 @@ func TestSendRetryFail_DueToDeviceGroupPartialFail(t *testing.T) {
 	s := NewSender("test-api-key")
 	result, err := s.SendWithRetries(msg, "group", 1)
 	assert.NoError(t, err)
-	assert.Equal(t, Result{Success: 1, Failure: 2, FailedRegistrationIds: []string{"id1", "id2"}}, *result)
+	assert.Equal(t, Result{Success: 1, Failure: 2, FailedRegistrationIDs: []string{"id1", "id2"}}, *result)
 }
 
 func TestSendRetryError_DueToUnrecoverableHttpError(t *testing.T) {
@@ -158,30 +158,30 @@ func TestSendMulticastRetryError_DueToUnrecoverableHttpError(t *testing.T) {
 func TestSendMulticastRetryOk(t *testing.T) {
 	server := startTestServer(t,
 		&testResponse{response: &partialMulticast},
-		&testResponse{response: &response{MulticastId: 2, Success: 1, Results: []result{{MessageId: "id2"}}}},
+		&testResponse{response: &response{MulticastID: 2, Success: 1, Results: []result{{MessageID: "id2"}}}},
 	)
 	defer server.Close()
 	s := NewSender("test-api-key")
 	result, err := s.SendMulticastWithRetries(msg, twoRecipients, 1)
 	assert.NoError(t, err)
-	assert.Equal(t, MulticastResult{MulticastId: 1, Success: 2, RetryMulticastIds: []int64{2}, Results: []Result{{MessageId: "id1"}, {MessageId: "id2"}}}, *result)
+	assert.Equal(t, MulticastResult{MulticastID: 1, Success: 2, RetryMulticastIDs: []int64{2}, Results: []Result{{MessageID: "id1"}, {MessageID: "id2"}}}, *result)
 }
 
 func TestSendMulticastRetryPartialFail_DueToExceededRetries(t *testing.T) {
 	server := startTestServer(t,
 		&testResponse{response: &partialMulticast},
-		&testResponse{response: &response{MulticastId: 2, Failure: 1, Results: []result{{Err: ErrorUnavailable}}}},
+		&testResponse{response: &response{MulticastID: 2, Failure: 1, Results: []result{{Err: ErrorUnavailable}}}},
 	)
 	defer server.Close()
 	s := NewSender("test-api-key")
 	result, err := s.SendMulticastWithRetries(msg, twoRecipients, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, MulticastResult{
-		MulticastId:       1,
+		MulticastID:       1,
 		Success:           1,
 		Failure:           1,
-		RetryMulticastIds: []int64{2},
-		Results:           []Result{{MessageId: "id1"}, {Error: ErrorUnavailable}},
+		RetryMulticastIDs: []int64{2},
+		Results:           []Result{{MessageID: "id1"}, {Error: ErrorUnavailable}},
 	}, *result)
 }
 
@@ -195,10 +195,10 @@ func TestSendMulticastRetryPartialFail_DueToUnrecoverableError(t *testing.T) {
 	result, err := s.SendMulticastWithRetries(msg, twoRecipients, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, MulticastResult{
-		MulticastId: 1,
+		MulticastID: 1,
 		Success:     1,
 		Failure:     1,
-		Results:     []Result{{MessageId: "id1"}, {Error: ErrorUnavailable}},
+		Results:     []Result{{MessageID: "id1"}, {Error: ErrorUnavailable}},
 	}, *result)
 }
 

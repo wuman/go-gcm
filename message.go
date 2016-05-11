@@ -43,14 +43,14 @@ type message struct {
 func (m *message) UnmarshalJSON(data []byte) error {
 	var aux struct {
 		To              string   `json:"to,omitempty"`
-		RegistrationIds []string `json:"registration_ids,omitempty"`
+		RegistrationIDs []string `json:"registration_ids,omitempty"`
 		Message
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 	m.to = aux.To
-	m.registrationIds = aux.RegistrationIds
+	m.registrationIds = aux.RegistrationIDs
 	m.Message = aux.Message
 	return nil
 }
@@ -89,11 +89,11 @@ func (m message) MarshalJSON() ([]byte, error) {
 	aux := struct {
 		Message
 		To              string   `json:"to,omitempty"`
-		RegistrationIds []string `json:"registration_ids,omitempty"`
+		RegistrationIDs []string `json:"registration_ids,omitempty"`
 	}{
 		Message:         m.Message,
 		To:              m.to,
-		RegistrationIds: m.registrationIds,
+		RegistrationIDs: m.registrationIds,
 	}
 	return json.Marshal(aux)
 }
