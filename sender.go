@@ -15,26 +15,31 @@ import (
 )
 
 const (
-	// endpoint for the GCM connection server owned by Google
+	// ConnectionServerEndpoint defines the endpoint for the GCM connection server owned by Google.
 	ConnectionServerEndpoint = "https://android.googleapis.com/gcm/send"
-	// initial retry intervl in milliseconds for exponential backoff
+	// BackoffInitialDelay defines the initial retry interval in milliseconds for exponential backoff.
 	BackoffInitialDelay = 1000
-	// max backoff period in milliseconds
+	// MaxBackoffDelay defines the max backoff period in milliseconds.
 	MaxBackoffDelay = 1024000
 )
 
 // for unit test only
 var gcmEndpoint = ConnectionServerEndpoint
 
+// Sender sends GCM messages to the GCM connection server.
 type Sender struct {
+	// ApiKey specifies the API key.
 	ApiKey string
+	// Client is the http client used for transport.  By default it is just http.Client.
 	Client *http.Client
 }
 
+// NewSender instantiates a Sender given the API key.
 func NewSender(apiKey string) *Sender {
 	return NewSenderWithHttpClient(apiKey, new(http.Client))
 }
 
+// NewSenderWithHttpClient instantiates a Sender given the API key and an http.Client.
 func NewSenderWithHttpClient(apiKey string, client *http.Client) *Sender {
 	return &Sender{apiKey, client}
 }

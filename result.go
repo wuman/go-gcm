@@ -1,5 +1,8 @@
 package gcm
 
+// Result represents the status of a processed message.
+//
+// Some fields are specific to device group messages: Success, Failure, FailedRegistrationIds.
 type Result struct {
 	MessageId               string `json:"message_id,omitempty"`
 	CanonicalRegistrationId string `json:"canonical_registration_id,omitempty"`
@@ -10,6 +13,7 @@ type Result struct {
 	FailedRegistrationIds []string `json:"failed_registration_ids,omitempty"`
 }
 
+// MulticastResult represents the response of a processed multicast message.
 type MulticastResult struct {
 	Success           int      `json:"success"`
 	Failure           int      `json:"failure"`
