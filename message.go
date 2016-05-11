@@ -5,11 +5,16 @@ import (
 	"fmt"
 )
 
+// Priority defines the priority of the message.
 type Priority int
 
 const (
-	Priority_Normal = iota + 1
-	Priority_High
+	// PriorityNormal defines the "normal" value of priority.  On iOS, this
+	// corresponds to APNs priority 5.
+	PriorityNormal = iota + 1
+	// PriorityHigh defines the "high" value of priority.  On iOS, this
+	// corresponds to APNs priority 10.
+	PriorityHigh
 )
 
 // Message specifies the downstream HTTP messages in JSON format.
@@ -31,8 +36,8 @@ type Message struct {
 type message struct {
 	Message
 	// Targets
-	to              string   `json:"to,omitempty"`
-	registrationIds []string `json:"registration_ids,omitempty"`
+	to              string
+	registrationIds []string
 }
 
 func (m *message) UnmarshalJSON(data []byte) error {
@@ -50,6 +55,7 @@ func (m *message) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON unmarshals Priority from json.
 func (p *Priority) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -58,20 +64,21 @@ func (p *Priority) UnmarshalJSON(data []byte) error {
 
 	switch s {
 	case "normal":
-		*p = Priority_Normal
+		*p = PriorityNormal
 	case "high":
-		*p = Priority_High
+		*p = PriorityHigh
 	default:
 		return fmt.Errorf("priority should be either normal or high, got %s", s)
 	}
 	return nil
 }
 
+// MarshalJSON marshals Priority to json.
 func (p Priority) MarshalJSON() ([]byte, error) {
 	switch p {
-	case Priority_Normal:
+	case PriorityNormal:
 		return json.Marshal("normal")
-	case Priority_High:
+	case PriorityHigh:
 		return json.Marshal("high")
 	default:
 		return nil, fmt.Errorf("invalid priority value: %v", p)
@@ -91,6 +98,7 @@ func (m message) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aux)
 }
 
+// Notification is the notification payload as defined at https://goo.gl/ChtnMw.
 type Notification struct {
 	Title        string   `json:"title,omitempty"` // required for Android
 	Body         string   `json:"body,omitempty"`
