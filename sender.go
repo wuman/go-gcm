@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,14 +18,20 @@ import (
 const (
 	// ConnectionServerEndpoint defines the endpoint for the GCM connection server owned by Google.
 	ConnectionServerEndpoint = "https://android.googleapis.com/gcm/send"
+	// FcmServerEndpoint defines the endpoint for the FCM connection server by Firebase.
+	FcmServerEndpoint = "https://fcm.googleapis.com/fcm/send"
 	// BackoffInitialDelay defines the initial retry interval in milliseconds for exponential backoff.
 	BackoffInitialDelay = 1000
 	// MaxBackoffDelay defines the max backoff period in milliseconds.
 	MaxBackoffDelay = 1024000
 )
 
-// for unit test only
+// can be replaced by flag.
 var gcmEndpoint = ConnectionServerEndpoint
+
+func init() {
+	flag.StringVar(&gcmEndpoint, "host", ConnectionServerEndpoint, "endpoint for gcm server")
+}
 
 // Sender sends GCM messages to the GCM connection server.
 type Sender struct {
