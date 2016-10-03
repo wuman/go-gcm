@@ -20,7 +20,7 @@ func TestMessageMarshalUnmarshal(t *testing.T) {
 		{`{"registration_ids":["1","2"]}`, &message{registrationIds: []string{"1", "2"}}, nil},
 		{`{"priority":"normal"}`, &message{Message: Message{Priority: PriorityNormal}}, nil},
 		{`{"priority":"high"}`, &message{Message: Message{Priority: PriorityHigh}}, nil},
-		{`{"data":{"k":"v"}}`, &message{Message: Message{Data: map[string]string{"k": "v"}}}, nil},
+		{`{"data":{"k":"v"}}`, &message{Message: Message{Data: map[string]interface{}{"k": "v"}}}, nil},
 		{`{"notification":{"title":"test"}}`, &message{Message: Message{Notification: &Notification{Title: "test"}}}, nil},
 		// unmarshal failure cases
 		{`{"priority":"nok"}`, nil, errors.New("priority should be either normal or high, got nok")},
