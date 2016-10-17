@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -18,20 +17,17 @@ import (
 const (
 	// ConnectionServerEndpoint defines the endpoint for the GCM connection server owned by Google.
 	ConnectionServerEndpoint = "https://android.googleapis.com/gcm/send"
-	// FcmServerEndpoint defines the endpoint for the FCM connection server by Firebase.
-	FcmServerEndpoint = "https://fcm.googleapis.com/fcm/send"
+	// FCMServerEndpoint defines the endpoint for the FCM connection server by Firebase.
+	FCMServerEndpoint = "https://fcm.googleapis.com/fcm/send"
 	// BackoffInitialDelay defines the initial retry interval in milliseconds for exponential backoff.
 	BackoffInitialDelay = 1000
 	// MaxBackoffDelay defines the max backoff period in milliseconds.
 	MaxBackoffDelay = 1024000
 )
 
-// can be replaced by flag.
-var gcmEndpoint = ConnectionServerEndpoint
-
-func init() {
-	flag.StringVar(&gcmEndpoint, "host", ConnectionServerEndpoint, "endpoint for gcm server")
-}
+// GCMEndpoint by default points to the GCM connection server owned by Google,
+// but can be otherwise set to a differnet URL if needed (e.g. FCMServerEndpoint).
+var GCMEndpoint = ConnectionServerEndpoint
 
 // Sender sends GCM messages to the GCM connection server.
 type Sender struct {
@@ -96,7 +92,7 @@ func (s *Sender) sendRaw(msg *message) (*response, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", gcmEndpoint, bytes.NewBuffer(msgJSON))
+	req, err := http.NewRequest("POST", GCMEndpoint, bytes.NewBuffer(msgJSON))
 	if err != nil {
 		return nil, err
 	}
