@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -29,16 +28,14 @@ const (
 // can be replaced by flag.
 var gcmEndpoint = ConnectionServerEndpoint
 
-func init() {
-	flag.StringVar(&gcmEndpoint, "host", ConnectionServerEndpoint, "endpoint for gcm server")
-}
-
 // Sender sends GCM messages to the GCM connection server.
 type Sender struct {
 	// APIKey specifies the API key.
 	APIKey string
 	// Client is the http client used for transport.  By default it is just http.Client.
 	Client *http.Client
+	// host defines the endpoint of cloud messaging.
+	host string
 }
 
 // NewSender instantiates a Sender given the API key.
@@ -48,7 +45,7 @@ func NewSender(apiKey string) *Sender {
 
 // NewSenderWithHTTPClient instantiates a Sender given the API key and an http.Client.
 func NewSenderWithHTTPClient(apiKey string, client *http.Client) *Sender {
-	return &Sender{apiKey, client}
+	return &Sender{apiKey, client, gcmEndpoint}
 }
 
 func checkUnrecoverableErrors(s *Sender, to string, regIDs []string, msg *Message, retries int) error {
@@ -96,7 +93,7 @@ func (s *Sender) sendRaw(msg *message) (*response, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", gcmEndpoint, bytes.NewBuffer(msgJSON))
+	req, err := http.NewRequest("POST", s.host, bytes.NewBuffer(msgJSON))
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +127,11 @@ func (s *Sender) sendRaw(msg *message) (*response, error) {
 	}
 
 	return response, nil
+}
+
+// Host sets the cloud messaging host of this Sender.
+func (s *Sender) Host(host string) {
+	s.host = host
 }
 
 // SendNoRetry sends a downstream message without retries.  The recipient can
