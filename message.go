@@ -29,8 +29,8 @@ type Message struct {
 	ContentAvailable      bool     `json:"content_available,omitempty"`
 	Priority              Priority `json:"priority,omitempty"`
 	// Payload
-	Data         map[string]string `json:"data,omitempty"`
-	Notification *Notification     `json:"notification,omitempty"`
+	Data         interface{}   `json:"data,omitempty"`
+	Notification *Notification `json:"notification,omitempty"`
 }
 
 type message struct {
